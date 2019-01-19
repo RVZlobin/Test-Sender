@@ -1,7 +1,41 @@
 cmake_minimum_required(VERSION 3.0)
+PROJECT(testsender)
 
-project(testsender)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -pthread -Wall")
+FIND_PACKAGE(Boost REQUIRED)
 
-add_executable(testsender main.cpp)
+SET(Boost_USE_STATIC_LIBS ON)
 
-install(TARGETS testsender RUNTIME DESTINATION bin)
+ADD_DEFINITIONS(
+  -DBOOST_LOG_DYN_LINK
+)
+
+SET (TestSender_HEADERS 
+  src/dev/device.h
+  src/dev/serialdevice.h
+  src/core/performer.h
+  src/core/command.h
+)
+
+SET (TestSender_SOURCE
+  src/dev/serialdevice.cpp
+  src/core/performer.cpp
+  src/core/command.cpp
+)
+
+ADD_EXECUTABLE(testsender
+  main.cpp
+  ${TestSender_HEADERS}
+  ${TestSender_SOURCE}
+)
+
+TARGET_INCLUDE_DIRECTORIES(testsender 
+  PRIVATE ${Boost_INCLUDEDIR}
+)
+
+TARGET_LINK_LIBRARIES(testsender
+    PRIVATE ${Boost_SYSTEM_LIBRARY} 
+    PRIVATE ${Boost_LOG_LIBRARY}
+)
+
+INSTALL(TARGETS testsender RUNTIME DESTINATION bin)
