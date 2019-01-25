@@ -13,12 +13,14 @@ ADD_DEFINITIONS(
 SET (TestSender_HEADERS 
   src/dev/device.h
   src/dev/serialdevice.h
+  src/core/protocol.h
   src/core/performer.h
   src/core/command.h
 )
 
 SET (TestSender_SOURCE
   src/dev/serialdevice.cpp
+  src/core/protocol.cpp
   src/core/performer.cpp
   src/core/command.cpp
 )
@@ -30,7 +32,10 @@ ADD_EXECUTABLE(testsender
 )
 
 TARGET_INCLUDE_DIRECTORIES(testsender 
-  PRIVATE ${Boost_INCLUDEDIR}
+  PRIVATE ${CMAKE_SOURCE_DIR}/src/
+          ${CMAKE_BINARY_DIR}/src/
+          ${Boost_INCLUDEDIR}
+  
 )
 
 TARGET_LINK_LIBRARIES(testsender
