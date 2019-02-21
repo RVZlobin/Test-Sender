@@ -1,4 +1,4 @@
-#include "command.h"
+#include <core/command.h>
 
 dev::Command::Command(std::string const& name): name(name) {
 
@@ -17,7 +17,7 @@ auto dev::Command::getId() const -> std::size_t {
 }
 
 auto dev::Command::setStatus(dev::Status const& status) -> void {
-        this->status = status;
+  this->status = status;
 }
 
 auto dev::Command::getStatus() const -> dev::Status {

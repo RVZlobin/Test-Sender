@@ -92,7 +92,7 @@ auto dev::SerialDevice::reead(std::size_t const& size) const -> dev::TransmitDat
   TransmitData data(size, 0);
   if(!portPtr)
     return { };
-  
+  //FIX добавить тамаут и обработку ошибок чтения
   boost::asio::read(*portPtr, boost::asio::buffer(data.data(), data.size()));
   return data;
 }

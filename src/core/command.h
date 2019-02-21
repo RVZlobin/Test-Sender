@@ -86,7 +86,9 @@ namespace dev {
         }
       private: 
         virtual auto responseProcessing(dev::TransmitData const& transmitData) -> void override final {
-          
+          if(transmitData.size() >= 1) {
+            p.set_value(static_cast<std::uint8_t>(transmitData[0]));
+          }
         };
     };
     typedef std::shared_ptr<IncCommand> IncCommandPtr;

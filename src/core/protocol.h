@@ -23,7 +23,7 @@ namespace dev {
     //FIX хранить указатель или идентификатор.
     std::vector<std::pair<DevicePtr, CommandPtr>> commandsExec;
     std::vector<std::pair<DevicePtr, std::future<int>>> responseRepository;
-    std::size_t sizeParcel = 8;
+    std::size_t sizeParcel = 1;
     std::size_t transmitDataLength = 1;
     std::size_t segmentDirectionLength = 1;
     std::size_t segmentIdLength = 4;
@@ -37,7 +37,9 @@ namespace dev {
     void runCommand(DevicePtr const& dev, CommandPtr const& cmd);
     
   private:
+    //метод dataCheck проверяет контрольные суммы и сигнатуру ответа.
     auto dataCheck(dev::TransmitData const& data) -> const bool;
+    //метод getId из принятого пакета извлекает идентификатор команды которой предназначен ответ.
     auto getId(dev::TransmitData const& data) -> const std::size_t;
     auto responseManager(std::string const& devName, dev::TransmitData const& data) -> void;
     void addResponse();
