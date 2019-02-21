@@ -9,10 +9,10 @@
 #include <boost/asio.hpp>
 #include <boost/asio/serial_port.hpp> 
 
-#include "device.h"
+#include <dev/device.h>
 
 namespace dev {
-  namespace RS232 {
+  namespace rs232 {
     enum class FlowControl { none, software, hardware };
     enum class StopBits { one, onepointfive, two };
     enum class Parity { none, odd, even };
@@ -21,30 +21,32 @@ namespace dev {
   struct Options {
     unsigned int baud_rate = 115200;
     unsigned int character_size = 8;
-    RS232::StopBits stop_bits = RS232::StopBits::one;
-    RS232::FlowControl flow_control = RS232::FlowControl::none;
-    RS232::Parity parity = RS232::Parity::none;
+    rs232::StopBits stop_bits = rs232::StopBits::one;
+    rs232::FlowControl flow_control = rs232::FlowControl::none;
+    rs232::Parity parity = rs232::Parity::none;
   };
   
-  class SerialDevice: virtual dev::Device {
+  class SerialDevice: public virtual dev::Device {
       std::string portName;
       Options options;
       boost::asio::io_service* io;
       std::shared_ptr<boost::asio::serial_port> portPtr;
     public:
       explicit SerialDevice (std::string const& portName, dev::Options const& options = Options());
-      ~SerialDevice ();
+      SerialDevice(SerialDevice const&) = delete;
+      virtual ~SerialDevice ();
       
       virtual auto open() -> int override;
       virtual auto cloae() -> int override;
       virtual auto write(dev::TransmitData const& data) const -> int override final;
       virtual auto reead(std::size_t const& size = 1) const -> dev::TransmitData override final;
-      auto getName () const -> std::string;
-      auto operator== (SerialDevice const& r) const -> bool {
+      auto getName () const -> std::string override final;
+      auto operator== (Device const& r) const -> bool override final {
         if(this->getName() == r.getName())
           return true;
         return false;
       }
   };
+  typedef std::shared_ptr<SerialDevice> SerialDevicePtr;
 };
 #endif // SERIALDEVICE_H

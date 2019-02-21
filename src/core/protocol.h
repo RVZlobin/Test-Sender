@@ -6,24 +6,23 @@
 #include <vector>
 #include <atomic>
 #include <mutex>
-#include <thread>
 #include <future>
-#include <functional>
 
-#include "dev/serialdevice.h"
-#include "command.h"
+#include <dev/device.h>
+#include <core/command.h>
 /**
  * @todo write docs
  */
-namespace pfr {
+namespace dev {
+  namespace rs232 {
   
   class Protocol {
     std::atomic<bool> isRun;
     std::mutex devMutex;
     std::once_flag init_flag;
     //FIX хранить указатель или идентификатор.
-    std::vector<std::pair<dev::SerialDevice const&, CommandPtr>> commandsExec;
-    std::vector<std::pair<dev::SerialDevice const&, std::future<int>>> responseRepository;
+    std::vector<std::pair<DevicePtr, CommandPtr>> commandsExec;
+    std::vector<std::pair<DevicePtr, std::future<int>>> responseRepository;
     std::size_t sizeParcel = 8;
     std::size_t transmitDataLength = 1;
     std::size_t segmentDirectionLength = 1;
@@ -32,8 +31,11 @@ namespace pfr {
     
   public:
     Protocol();
+    Protocol(Protocol const&) = delete;
     ~Protocol();
-    void runCommand(dev::SerialDevice const& dev, CommandPtr const& cmd);
+    
+    void runCommand(DevicePtr const& dev, CommandPtr const& cmd);
+    
   private:
     auto dataCheck(dev::TransmitData const& data) -> const bool;
     auto getId(dev::TransmitData const& data) -> const std::size_t;
@@ -44,5 +46,6 @@ namespace pfr {
   
   typedef std::shared_ptr<Protocol> ProtocolPtr;
   
+  };
 };
 #endif // PROTOCOL_H

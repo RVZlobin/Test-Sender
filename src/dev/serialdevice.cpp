@@ -1,4 +1,4 @@
-#include "serialdevice.h"
+#include <dev/serialdevice.h>
 
 dev::SerialDevice::SerialDevice(std::string const& portName, Options const& options) 
   : portName(portName),
@@ -24,9 +24,9 @@ auto dev::SerialDevice::open() -> int {
         portPtr->set_option( boost::asio::serial_port_base::character_size( options.character_size ));
         auto flow_control = boost::asio::serial_port_base::flow_control::none;
         switch(options.flow_control) {
-          case RS232::FlowControl::software:
+          case rs232::FlowControl::software:
             flow_control = boost::asio::serial_port_base::flow_control::software;
-          case RS232::FlowControl::hardware:
+          case rs232::FlowControl::hardware:
             flow_control = boost::asio::serial_port_base::flow_control::hardware;
           default:
             break;
@@ -34,9 +34,9 @@ auto dev::SerialDevice::open() -> int {
         portPtr->set_option( boost::asio::serial_port_base::flow_control(flow_control));
         auto parity = boost::asio::serial_port_base::parity::none;
         switch(options.parity) {
-          case RS232::Parity::even:
+          case rs232::Parity::even:
             parity = boost::asio::serial_port_base::parity::even;
-          case RS232::Parity::odd:
+          case rs232::Parity::odd:
             parity = boost::asio::serial_port_base::parity::odd;
           default:
             break;
@@ -44,9 +44,9 @@ auto dev::SerialDevice::open() -> int {
         portPtr->set_option( boost::asio::serial_port_base::parity(parity));
         auto stop_bits = boost::asio::serial_port_base::stop_bits::one;
         switch(options.stop_bits) {
-          case RS232::StopBits::onepointfive:
+          case rs232::StopBits::onepointfive:
             stop_bits = boost::asio::serial_port_base::stop_bits::onepointfive;
-          case RS232::StopBits::two:
+          case rs232::StopBits::two:
             stop_bits = boost::asio::serial_port_base::stop_bits::two;
           default:
             break;

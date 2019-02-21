@@ -8,9 +8,9 @@
 #include <string>
 #include <future>
 
-#include "dev/device.h"
+#include <dev/device.h>
 
-namespace pfr {
+namespace dev {
   
   enum class Status {
     SPIRIT,
@@ -52,12 +52,12 @@ namespace pfr {
   
   namespace com {
     
-    class SetValue : public pfr::Command {
+    class SetValueCommand : public dev::Command {
         mutable std::promise<std::uint16_t> p;
         std::shared_ptr<std::shared_future<std::uint16_t>> result;
         
       public:
-        SetValue(std::uint16_t const& value): pfr::Command("SetValue") { 
+        SetValueCommand(std::uint16_t const& value): dev::Command("SetValue") { 
           result = std::make_shared<std::shared_future<std::uint16_t>>(p.get_future());
         }
         
@@ -69,7 +69,27 @@ namespace pfr {
           
         };
     };
-    typedef std::shared_ptr<SetValue> SetValuePtr;
+    typedef std::shared_ptr<SetValueCommand> SetValueCommandPtr;
+    
+    class IncCommand : public dev::Command {
+        mutable std::promise<std::uint8_t> p;
+        mutable std::shared_ptr<std::shared_future<std::uint8_t>> result;
+        std::uint8_t value;
+      public:
+        IncCommand(std::uint8_t const& value): dev::Command("Inc"), value(value) { 
+          result = std::make_shared<std::shared_future<std::uint8_t>>(p.get_future());
+        }
+        IncCommand(IncCommand const&) = delete;
+        virtual ~IncCommand() { }
+        std::shared_ptr<std::shared_future<std::uint8_t>> operator()() const {
+          return result;
+        }
+      private: 
+        virtual auto responseProcessing(dev::TransmitData const& transmitData) -> void override final {
+          
+        };
+    };
+    typedef std::shared_ptr<IncCommand> IncCommandPtr;
   }
   typedef std::shared_ptr<Command> CommandPtr;
 };
