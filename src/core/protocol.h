@@ -48,6 +48,6 @@ namespace dev {
   
   typedef std::shared_ptr<Protocol> ProtocolPtr;
   
-  };
-};
+  }
+}
 #endif // PROTOCOL_H

@@ -15,7 +15,8 @@ namespace dev {
   
   class Device {
       
-    public:    
+    public:
+      virtual ~Device() { }
       virtual int open() = 0;
       virtual int cloae() = 0;
       virtual int write(TransmitData const& data) const = 0;
@@ -26,5 +27,5 @@ namespace dev {
   };
   typedef std::shared_ptr<Device> DevicePtr;
   
-};
+}
 #endif // DEVICE_H

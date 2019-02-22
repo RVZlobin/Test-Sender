@@ -36,8 +36,8 @@ namespace dev {
 
       };
       
-    };
-  };
-};
+    }
+  }
+}
 
 #endif // SERIALDEVICEDRIVER_H

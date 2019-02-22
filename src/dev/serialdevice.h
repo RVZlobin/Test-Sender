@@ -16,7 +16,7 @@ namespace dev {
     enum class FlowControl { none, software, hardware };
     enum class StopBits { one, onepointfive, two };
     enum class Parity { none, odd, even };
-  };
+  }
   
   struct Options {
     unsigned int baud_rate = 115200;
@@ -48,5 +48,5 @@ namespace dev {
       }
   };
   typedef std::shared_ptr<SerialDevice> SerialDevicePtr;
-};
+}
 #endif // SERIALDEVICE_H

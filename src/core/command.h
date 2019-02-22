@@ -31,7 +31,7 @@ namespace dev {
     public:
       explicit Command(std::string const& name);
       Command() = delete;
-      ~Command ();
+      virtual ~Command ();
       
       virtual auto setId(std::size_t id) -> void final;
       virtual auto getId() const -> std::size_t final;
@@ -76,7 +76,8 @@ namespace dev {
         mutable std::shared_ptr<std::shared_future<std::uint8_t>> result;
         std::uint8_t value;
       public:
-        IncCommand(std::uint8_t const& value): dev::Command("Inc"), value(value) { 
+        IncCommand(std::uint8_t const& value): dev::Command("Inc"), value(value) {
+          this->transmitData.push_back(value);
           result = std::make_shared<std::shared_future<std::uint8_t>>(p.get_future());
         }
         IncCommand(IncCommand const&) = delete;
@@ -86,7 +87,7 @@ namespace dev {
         }
       private: 
         virtual auto responseProcessing(dev::TransmitData const& transmitData) -> void override final {
-          if(transmitData.size() >= 1) {
+          if(transmitData.size() > 0) {
             p.set_value(static_cast<std::uint8_t>(transmitData[0]));
           }
         };
@@ -94,7 +95,7 @@ namespace dev {
     typedef std::shared_ptr<IncCommand> IncCommandPtr;
   }
   typedef std::shared_ptr<Command> CommandPtr;
-};
+}
 #endif // COMMAND_H
 
 

@@ -1,3 +1,4 @@
+#include <iostream>
 #include <dev/serialdevice.h>
 
 dev::SerialDevice::SerialDevice(std::string const& portName, Options const& options) 
@@ -7,13 +8,21 @@ dev::SerialDevice::SerialDevice(std::string const& portName, Options const& opti
     portPtr(std::make_shared<boost::asio::serial_port>(*io, portName))
 { }
 
-dev::SerialDevice::~SerialDevice() { }
+dev::SerialDevice::~SerialDevice() { 
+  if(portPtr->is_open())
+    portPtr->close();
+}
       
 auto dev::SerialDevice::open() -> int {
   int errorCode = -1;
   try {
     if(!portPtr)
       return errorCode;
+    
+    if(portPtr->is_open()) {
+      std::cout << "Закрытие порта - " << portName << std::endl;
+      portPtr->close();
+    }
     
     portPtr->open(portName);
  
@@ -54,8 +63,11 @@ auto dev::SerialDevice::open() -> int {
         portPtr->set_option( boost::asio::serial_port_base::stop_bits(stop_bits));
     }
     return errorCode;
-  } catch(...) {
+  } catch(std::exception const& exc) {
+    std::cout << "port open Exception - " << exc.what() << std::endl;
     return -1;
+  } catch(...) {
+    return -2;
   }
   return errorCode;
 }
@@ -94,6 +106,7 @@ auto dev::SerialDevice::reead(std::size_t const& size) const -> dev::TransmitDat
     return { };
   //FIX добавить тамаут и обработку ошибок чтения
   boost::asio::read(*portPtr, boost::asio::buffer(data.data(), data.size()));
+  std::cout << "Приняты данные - " << data.size() << std::endl;
   return data;
 }
 
