@@ -97,35 +97,3 @@ namespace dev {
   typedef std::shared_ptr<Command> CommandPtr;
 }
 #endif // COMMAND_H
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

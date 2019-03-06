@@ -2,11 +2,6 @@
 #include <iostream>
 
 #include <core/protocol.h>
-
-//std::future<int> ret = tsk.get_future();    // get future
-//std::thread th (std::move(tsk),10,0);       // spawn thread to count down from 10 to 0
-//int value = ret.get();                      // wait for the task to finish and get result
-//th.join();
   
 dev::rs232::Protocol::Protocol() {
   isRun = true;
@@ -20,7 +15,7 @@ void dev::rs232::Protocol::runCommand(DevicePtr const& dev, CommandPtr const& cm
   std::unique_lock<std::mutex> lock(devMutex);
   //поиск сборщика ответов от устройства.
   auto presents = std::find_if(responseRepository.begin(), responseRepository.end(), 
-                               [&](std::pair<DevicePtr, std::future<int>> const& item) {
+                               [&](auto const& item) {
                                  return item.first == dev; 
                               });
   if(presents == responseRepository.end()) {
@@ -50,7 +45,7 @@ void dev::rs232::Protocol::runCommand(DevicePtr const& dev, CommandPtr const& cm
             std::unique_lock<std::mutex> moveDataLock(moveDataMutex);
             tempData = { };
           }
-          std::this_thread::sleep_for(std::chrono::milliseconds(2));
+          //std::this_thread::sleep_for(std::chrono::milliseconds(2));
         }
         errorCode = 0;
       } catch(std::exception const& exc) {
@@ -92,12 +87,12 @@ auto dev::rs232::Protocol::getId(dev::TransmitData const& data) -> const std::si
 
 auto dev::rs232::Protocol::responseManager(std::string const& devName, dev::TransmitData const& data) -> void {
   if(dataCheck(data)) {
-    auto cmdId = getId(data);
+    //auto cmdId = getId(data);
     std::cout << "Поиск команды в очереди для передачи ответа data.size() = " << data.size() << std::endl;
     if(data.size() > 0) 
       std::cout << "data[0]=" << static_cast<int>(data[0]) << std::endl;
     auto cmd = std::find_if(commandsExec.begin(), commandsExec.end(), 
-                               [&](std::pair<dev::DevicePtr, CommandPtr> const& item) {
+                               [&](auto const& item) {
                                  return item.first->getName() == devName /*&& item.second->getId() == cmdId*/ ;
                               });
     if(cmd != commandsExec.end()) {
@@ -106,19 +101,3 @@ auto dev::rs232::Protocol::responseManager(std::string const& devName, dev::Tran
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
