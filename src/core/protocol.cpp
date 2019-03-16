@@ -1,6 +1,6 @@
 #include <algorithm>
 #include <iostream>
-
+#include <iterator>
 #include <core/protocol.h>
   
 dev::rs232::Protocol::Protocol() {
