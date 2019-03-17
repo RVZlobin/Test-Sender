@@ -4,7 +4,7 @@ PROJECT(testsender)
 set(GLOBAL PROPERTY USE_FOLDERS ON)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -pthread -Wall -pedantic")
 
-FIND_PACKAGE(Boost 1.69.0 REQUIRED COMPONENTS system log log_setup)
+FIND_PACKAGE(Boost REQUIRED COMPONENTS system)
 
 SET(Boost_USE_STATIC_LIBS ON)
 
