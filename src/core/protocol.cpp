@@ -69,7 +69,8 @@ void dev::rs232::Protocol::runCommand(DevicePtr const& dev, CommandPtr const& cm
   cmd->setId(sequenceId++);
   //запись команды в порт (отправка на исполнение)
   std::cout << "Отправка команды на исполнение." << std::endl;
-  auto errorcode = dev->write(cmd->getTransmitData());
+  auto errorcode = dev->write(prepareCommand(cmd));
+  //auto errorcode = dev->write(cmd->getTransmitData());
   std::cout << "Отправка команды на исполнение errorcode - " <<  errorcode << std::endl;
   if(errorcode < 0) { 
     throw std::runtime_error("Ошибка записи в порт");
@@ -83,6 +84,33 @@ auto dev::rs232::Protocol::dataCheck(dev::TransmitData const& data) -> const boo
 
 auto dev::rs232::Protocol::getId(dev::TransmitData const& data) -> const std::size_t {
   return 1;
+}
+
+auto dev::rs232::Protocol::prepareCommand(CommandPtr const& cmd) -> dev::TransmitData {
+  dev::TransmitData tx;
+  auto data = cmd->getTransmitData();
+  unsigned char dataSize = static_cast<unsigned char>(data.size());
+  tx.push_back(static_cast<unsigned char>(cmd->getDevId()));
+  tx.push_back(static_cast<unsigned char>(cmd->getKind()));
+  tx.push_back(dataSize);
+  tx.push_back(static_cast<unsigned char>(cmd->getIndex()));
+  subIndex.src = static_cast<std::uint16_t>(cmd->getSubIndex());
+  tx.push_back(static_cast<unsigned char>(subIndex.des.major));
+  tx.push_back(static_cast<unsigned char>(subIndex.des.minor));
+  
+  std::move(data.rbegin(), data.rend(), std::back_inserter(tx));
+  std::size_t sum = 0;
+  std::for_each(tx.begin(), tx.end(), [&](auto& item) { sum += item; });
+  for (auto i = 0; i < 2; i++) {
+    tx.push_back(~((sum >> (8 * i)) & 0xFF));
+  }
+  std::for_each(tx.begin(), tx.end(), [&](auto& item) { 
+    //std::cout.unsetf(std::ios::dec);
+    //std::cout.setf(std::ios::hex | std::ios::uppercase);
+    printf(":%X:", item);
+  });
+  std::cout << std::endl;
+  return tx;
 }
 
 auto dev::rs232::Protocol::responseManager(std::string const& devName, dev::TransmitData const& data) -> void {
@@ -101,3 +129,4 @@ auto dev::rs232::Protocol::responseManager(std::string const& devName, dev::Tran
     }
   }
 }
+

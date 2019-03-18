@@ -17,6 +17,16 @@ namespace dev {
   namespace rs232 {
   
   class Protocol {
+    struct Des {
+      unsigned char minor;
+      unsigned char major;
+    };
+
+    union {
+      std::uint16_t src;
+      struct Des des;
+    } subIndex;
+
     std::atomic<bool> isRun;
     std::mutex devMutex;
     std::once_flag init_flag;
@@ -41,7 +51,8 @@ namespace dev {
     auto dataCheck(dev::TransmitData const& data) -> const bool;
     //метод getId из принятого пакета извлекает идентификатор команды которой предназначен ответ.
     auto getId(dev::TransmitData const& data) -> const std::size_t;
-    auto responseManager(std::string const& devName, dev::TransmitData const& data) -> void;
+    auto prepareCommand(CommandPtr const& cmd) ->dev::TransmitData;
+    inline auto responseManager(std::string const& devName, dev::TransmitData const& data) -> void;
     void addResponse();
     void removeResponse();
   };

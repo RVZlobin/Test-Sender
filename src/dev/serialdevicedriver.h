@@ -31,8 +31,9 @@ namespace dev {
           * Destructor
           */
         ~SerialDeviceDriver ();
-        
-        auto inc(std::uint8_t const& value) -> std::uint8_t;
+
+        auto setValue(std::uint8_t const& devId, std::uint16_t const& value) -> void;
+        auto inc(std::uint8_t const& devId, std::uint8_t const& value) -> std::uint8_t;
 
       };
       

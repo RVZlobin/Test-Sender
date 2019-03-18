@@ -8,7 +8,7 @@
 
 int main(int argc, char **argv) {
   std::string portName("/dev/ttyUSB0");
-  
+  setlocale(LC_ALL, "Russian");
   if (argc > 1) {
     portName = std::string(argv[1]);
   }
@@ -18,10 +18,13 @@ int main(int argc, char **argv) {
   std::cout << "errorcode - " << errorcode << std::endl;
   
   dev::drivers::rs232::SerialDeviceDriver driver(dev);
-    
+  //driver.setValue(1, 5455);
+  //driver.setValue(1, 5471);
+  driver.setValue(1, 8772);
+  /*
   for(int i = 0; i < 255; i++) {
     auto beginTime = std::chrono::high_resolution_clock::now();
-    int incr = driver.inc(static_cast<std::uint8_t>(i));
+    int incr = driver.inc(1, static_cast<std::uint8_t>(i));
     if(i + 1 != incr) {
       std::cout << "Ошибка расчетов: i = " << i <<" incr =" << incr << std::endl;
       return 0;
@@ -33,7 +36,7 @@ int main(int argc, char **argv) {
     if(incr == 255)
       i = 0;
   }
-  
+  */
   int a = 0;
   std::cin >> a;
   return 0;

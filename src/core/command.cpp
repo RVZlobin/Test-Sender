@@ -1,12 +1,18 @@
 #include <core/command.h>
 
-dev::Command::Command(std::string const& name): name(name) {
+dev::Command::Command(std::uint8_t const& devId, std::string const& name)
+  : devId(devId),
+    name(name) 
+{ }
 
-}
+dev::Command::Command(std::uint8_t const& devId, std::string const& name, std::size_t const& index, std::size_t const& subIndex)
+  : devId(devId),
+    name(name),
+    index(index),
+    subIndex(subIndex)
+{ }
 
-dev::Command::~Command() {
-
-}
+dev::Command::~Command() { }
 
 auto dev::Command::setId(std::size_t id) -> void {
   this->id = id;
