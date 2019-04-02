@@ -10,13 +10,14 @@
 
 #include <dev/device.h>
 #include <core/command.h>
+#include <serialdevice_export.h>
 /**
  * @todo write docs
  */
 namespace dev {
   namespace rs232 {
   
-  class Protocol {
+  class SERIALDEVICE_API Protocol {
     struct Des {
       unsigned char minor;
       unsigned char major;

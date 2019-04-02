@@ -9,6 +9,7 @@
 #include <future>
 
 #include <dev/device.h>
+#include <serialdevice_export.h>
 
 namespace dev {
   
@@ -21,7 +22,7 @@ namespace dev {
     DONE
   };
   
-  class Command {
+  class SERIALDEVICE_API Command {
     private:
       std::size_t id = 0;
       Status status = Status::SPIRIT;

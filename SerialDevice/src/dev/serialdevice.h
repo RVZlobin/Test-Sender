@@ -10,6 +10,7 @@
 #include <boost/asio/serial_port.hpp> 
 
 #include <dev/device.h>
+#include <serialdevice_export.h>
 
 namespace dev {
   namespace rs232 {
@@ -26,7 +27,7 @@ namespace dev {
     rs232::Parity parity = rs232::Parity::none;
   };
   
-  class SerialDevice: public virtual dev::Device {
+  class SERIALDEVICE_API SerialDevice: public virtual dev::Device {
       std::string portName;
       Options options;
       boost::asio::io_service* io;

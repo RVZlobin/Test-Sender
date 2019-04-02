@@ -10,12 +10,13 @@
 #include <dev/device.h>
 #include <core/command.h>
 #include <dev/serialdevice.h>
+#include <serialdevice_export.h>
 
 namespace dev {
   namespace drivers {
     namespace rs232 {
       
-      class SerialDeviceDriver {
+      class SERIALDEVICE_API SerialDeviceDriver {
         
       protected:
         dev::SerialDevicePtr dev;

@@ -9,11 +9,13 @@
 #include <vector>
 #include <memory>
 
+#include <serialdevice_export.h>
+
 namespace dev {
   
   typedef std::vector<unsigned char> TransmitData;
   
-  class Device {
+  class SERIALDEVICE_API Device {
       
     public:
       virtual ~Device() { }
