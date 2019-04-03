@@ -24,6 +24,10 @@ SET (SerialDevice_HEADERS
   src/core/command.h
 )
 
+SET (SerialDevice_COMMAND_HEADERS
+  src/core/command/SetResistance.h
+)
+
 SET (SerialDevice_SOURCE
   src/dev/serialdevice.cpp
   src/dev/serialdevicedriver.cpp
@@ -33,6 +37,7 @@ SET (SerialDevice_SOURCE
 
 ADD_LIBRARY(SerialDevice SHARED
   ${SerialDevice_HEADERS}
+  ${SerialDevice_COMMAND_HEADERS}
   ${SerialDevice_SOURCE}
 )
   
@@ -59,4 +64,5 @@ TARGET_COMPILE_DEFINITIONS(SerialDevice
           BOOST_ALL_DYN_LINK
 )
 
+SOURCE_GROUP("command headers" FILES ${SerialDevice_COMMAND_HEADERS} )
 INSTALL(TARGETS SerialDevice RUNTIME DESTINATION bin)

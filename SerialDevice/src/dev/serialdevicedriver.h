@@ -19,21 +19,16 @@ namespace dev {
       class SERIALDEVICE_API SerialDeviceDriver {
         
       protected:
-        dev::SerialDevicePtr dev;
-        dev::rs232::ProtocolPtr protocol;
-        
-      public:
-          /**
-          * Default constructor
-          */
-        SerialDeviceDriver (dev::SerialDevicePtr const& rs232Dev);
+        SerialDeviceDriver() { }
+        dev::SerialDevicePtr dev = nullptr;
+        dev::rs232::ProtocolPtr protocol = nullptr;
 
-          /**
-          * Destructor
-          */
-        ~SerialDeviceDriver ();
+      public:
+        SerialDeviceDriver (dev::SerialDevicePtr const& rs232Dev);
+        virtual ~SerialDeviceDriver ();
 
         auto setValue(std::uint8_t const& devId, std::uint16_t const& value) -> void;
+        auto setResistanceCommand(std::uint8_t const& devId, std::size_t subIndex, std::uint8_t const& value) -> void;
         auto inc(std::uint8_t const& devId, std::uint8_t const& value) -> std::uint8_t;
 
       };
