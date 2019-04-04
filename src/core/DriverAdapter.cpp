@@ -1,13 +1,23 @@
 #include <QMessageBox>
 #include "DriverAdapter.h"
+
 dev::drivers::rs232::DriverAdapter::
-DriverAdapter(dev::SerialDevicePtr const& rs232Dev, QObject* parent) {
+DriverAdapter(QObject* parent) : QObject(parent) {
+
+}
+
+dev::drivers::rs232::DriverAdapter::
+DriverAdapter(dev::SerialDevicePtr const& rs232Dev, QObject* parent) : QObject(parent) {
 
 }
 
 dev::drivers::rs232::DriverAdapter::
 ~DriverAdapter() {
-  dev->cloae();
+  try {
+    dev->close();
+    dev = nullptr;
+    protocol = nullptr;
+  } catch (...) { }
 }
 
 void dev::drivers::rs232::DriverAdapter::
@@ -22,10 +32,12 @@ setConnect(QString port) {
 
 void dev::drivers::rs232::DriverAdapter::
 setValueR1(int value) {
-  setResistanceCommand(1, 1, static_cast<std::uint8_t>(value));
+  if(dev && protocol)
+    setResistanceCommand(1, 1, static_cast<std::uint8_t>(value));
 }
 
 void dev::drivers::rs232::DriverAdapter::
 setValueR2(int value) {
-  setResistanceCommand(1, 2, static_cast<std::uint8_t>(value));
+  if (dev && protocol)
+    setResistanceCommand(1, 2, static_cast<std::uint8_t>(value));
 }

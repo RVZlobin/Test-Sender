@@ -21,10 +21,11 @@ namespace dev {
         std::uint8_t value;
       public:
         SetResistanceCommand(std::uint8_t const& devId, std::size_t subIndex, std::uint8_t const& value)
-          : dev::Command(devId, "SetResistance", 5, subIndex), value(value)
+          : dev::Command(devId, "SetResistance", 1, subIndex), value(value)
         {
+          this->kind = 6;
           this->transmitData.push_back(value);
-          result = std::make_shared<std::shared_future<std::uint8_t>>(p.get_future());
+          result = std::make_shared<std::shared_future<void>>(p.get_future());
         }
         SetResistanceCommand(SetResistanceCommand const&) = delete;
         virtual ~SetResistanceCommand() { }

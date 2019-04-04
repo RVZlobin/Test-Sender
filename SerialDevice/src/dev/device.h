@@ -20,7 +20,7 @@ namespace dev {
     public:
       virtual ~Device() { }
       virtual int open() = 0;
-      virtual int cloae() = 0;
+      virtual int close() = 0;
       virtual int write(TransmitData const& data) const = 0;
       virtual TransmitData reead(std::size_t const& size = 1) const = 0;
       

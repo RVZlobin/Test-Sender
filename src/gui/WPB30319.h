@@ -13,7 +13,7 @@
 #include <QDockWidget>
 #include <QVBoxLayout>
 #include <QTimer>
-
+#include <core/DriverAdapter.h>
 #include "WControl.h"
 
 namespace OperatorInterface {
@@ -25,5 +25,6 @@ namespace OperatorInterface {
     ~WPB30319();
 
     WControl* wControl;
+    dev::drivers::rs232::DriverAdapter* driverAdapter;
   };
 }

@@ -38,7 +38,7 @@ namespace dev {
       virtual ~SerialDevice ();
       
       virtual auto open() -> int override;
-      virtual auto cloae() -> int override;
+      virtual auto close() -> int override;
       virtual auto write(dev::TransmitData const& data) const -> int override final;
       virtual auto reead(std::size_t const& size = 1) const -> dev::TransmitData override final;
       auto getName () const -> std::string override final;

@@ -72,7 +72,7 @@ auto dev::SerialDevice::open() -> int {
   return errorCode;
 }
 
-auto dev::SerialDevice::cloae() -> int {
+auto dev::SerialDevice::close() -> int {
   int errorCode = -1;
   if(!portPtr)
       return errorCode;
