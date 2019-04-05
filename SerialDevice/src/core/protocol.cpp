@@ -5,10 +5,36 @@
   
 dev::rs232::Protocol::Protocol() {
   isRun = true;
+  std::function<int()> writer = [&]() -> int {
+    while (isRun) {
+      auto cmd = std::find_if(commandsExec.begin(), commandsExec.end(),
+        [&](auto const& item) {
+          return item.second->getStatus() == dev::Status::SPIRIT;
+        });
+      if (cmd != commandsExec.end() && cmd->first) {
+        //запись команды в порт (отправка на исполнение)
+        auto errorcode = cmd->first->write(prepareCommand(cmd->second));
+        if (errorcode < 0) {
+          throw std::runtime_error("Ошибка записи в порт");
+        }
+        cmd->second->setStatus(dev::Status::NEW);
+        if (cmd->second->getKind() == 6) {
+          //FIX тип команд не предполагающих ответа
+          cmd->second->response({ });
+          commandsExec.erase(cmd);
+        }
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    return 0;
+  };
+  std::packaged_task<int()> writerTsk(writer);
+  std::thread writerTskThread(std::move(writerTsk));
+  writerTskThread.detach();
 }
 
 dev::rs232::Protocol::~Protocol() {
-  
+  isRun = false;
 }
 
 void dev::rs232::Protocol::runCommand(DevicePtr const& dev, CommandPtr const& cmd) {
@@ -65,17 +91,8 @@ void dev::rs232::Protocol::runCommand(DevicePtr const& dev, CommandPtr const& cm
     presentsThread.detach();
   }
   std::cout << "помещение команды в очередь." << std::endl;
-  commandsExec.push_back(std::make_pair(dev, cmd));
   cmd->setId(sequenceId++);
-  //запись команды в порт (отправка на исполнение)
-  std::cout << "Отправка команды на исполнение." << std::endl;
-  auto errorcode = dev->write(prepareCommand(cmd));
-  //auto errorcode = dev->write(cmd->getTransmitData());
-  std::cout << "Отправка команды на исполнение errorcode - " <<  errorcode << std::endl;
-  if(errorcode < 0) { 
-    throw std::runtime_error("Ошибка записи в порт");
-  }
-  cmd->setStatus(dev::Status::NEW);
+  commandsExec.push_back(std::make_pair(dev, cmd));
 }
 
 auto dev::rs232::Protocol::dataCheck(dev::TransmitData const& data) -> const bool {
