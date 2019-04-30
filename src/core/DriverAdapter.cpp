@@ -22,6 +22,10 @@ dev::drivers::rs232::DriverAdapter::
 
 void dev::drivers::rs232::DriverAdapter::
 setConnect(QString port) {
+  if (dev)
+    dev = nullptr;
+  if(protocol)
+    protocol = nullptr;
   dev = std::make_shared<dev::SerialDevice>(port.toStdString());
   protocol = std::make_shared<dev::rs232::Protocol>();
   int errorcode = dev->open();

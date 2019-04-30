@@ -9,15 +9,16 @@ dev::SerialDevice::SerialDevice(std::string const& portName, Options const& opti
 { }
 
 dev::SerialDevice::~SerialDevice() { 
-  if(portPtr->is_open())
+  if(portPtr && portPtr->is_open())
     portPtr->close();
 }
       
 auto dev::SerialDevice::open() -> int {
   int errorCode = -1;
   try {
-    if(!portPtr)
-      return errorCode;
+    if (!portPtr) {
+      portPtr = std::make_shared<boost::asio::serial_port>(*io, portName);
+    }
     
     if(portPtr->is_open()) {
       std::cout << "Закрытие порта - " << portName << std::endl;
@@ -81,6 +82,7 @@ auto dev::SerialDevice::close() -> int {
     portPtr->close();
     errorCode = 0;
   }
+  portPtr = nullptr;
   return errorCode;
 }
 

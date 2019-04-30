@@ -25,7 +25,6 @@ namespace dev {
         {
           this->kind = 6;
           this->transmitData.push_back(value);
-          this->transmitData.push_back(0);
           result = std::make_shared<std::shared_future<void>>(p.get_future());
         }
         SetResistanceCommand(SetResistanceCommand const&) = delete;

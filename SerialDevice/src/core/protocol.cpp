@@ -5,8 +5,13 @@
   
 dev::rs232::Protocol::Protocol() {
   isRun = true;
+  devMutexPtr = std::make_shared<std::shared_mutex>();
+
   std::function<int()> writer = [&]() -> int {
+    auto localdevMutexPtr = devMutexPtr;
     while (isRun) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+      std::shared_lock<std::shared_mutex> lock(*localdevMutexPtr);
       auto cmd = std::find_if(commandsExec.begin(), commandsExec.end(),
         [&](auto const& item) {
           return item.second->getStatus() == dev::Status::SPIRIT;
@@ -17,14 +22,15 @@ dev::rs232::Protocol::Protocol() {
         if (errorcode < 0) {
           throw std::runtime_error("Ошибка записи в порт");
         }
+        lock.unlock();
         cmd->second->setStatus(dev::Status::NEW);
         if (cmd->second->getKind() == 6) {
           //FIX тип команд не предполагающих ответа
           cmd->second->response({ });
+          std::unique_lock<std::shared_mutex> lock(*localdevMutexPtr);
           commandsExec.erase(cmd);
         }
       }
-      std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
     return 0;
   };
@@ -35,10 +41,17 @@ dev::rs232::Protocol::Protocol() {
 
 dev::rs232::Protocol::~Protocol() {
   isRun = false;
+  try {
+    for (auto& item : responseRepository) { 
+      if (item.first) {
+        item.first->close();
+        item.second.wait();
+      }
+    }
+  } catch (...) { }
 }
 
 void dev::rs232::Protocol::runCommand(DevicePtr const& dev, CommandPtr const& cmd) {
-  std::unique_lock<std::mutex> lock(devMutex);
   //поиск сборщика ответов от устройства.
   auto presents = std::find_if(responseRepository.begin(), responseRepository.end(), 
                                [&](auto const& item) {
@@ -51,24 +64,22 @@ void dev::rs232::Protocol::runCommand(DevicePtr const& dev, CommandPtr const& cm
       dev::TransmitData tempData;
       try {
         while (isRun) {
+          //FIX добавить лимит времени на получение данных (сброс не полного вектора)
           std::cout << "Get  signalQuantum." << std::endl;
           dev::TransmitData signalQuantum(devLocal->reead());
           std::move(signalQuantum.begin(), signalQuantum.end(), std::back_inserter(tempData));
-          if(tempData.size() == sizeParcel) {
-            std::mutex moveDataMutex;
-            std::unique_lock<std::mutex> lock(moveDataMutex);
-            std::thread responseManagerThread([&]() {
+          if (tempData.size() == minSizeParcel) {
+            dataLength = static_cast<std::size_t>(tempData[minSizeParcel - 1]);
+          } else if (tempData.size() == getPakageLength()) {
+            std::function<void(dev::TransmitData&&)> rmFun = ([&](dev::TransmitData&& data) -> void {
               try {
-                dev::TransmitData responseData = std::move(tempData);
-                lock.unlock();
-                responseManager(devLocal->getName(), std::move(responseData));
+                responseManager(devLocal->getName(), std::move(data));
               } catch(...) {
-                lock.unlock();
               }
             });
-            responseManagerThread.detach();
+            std::thread responseManagerThread(std::move(rmFun), std::move(tempData));
             //освобождение потока с задачей обработки команд от устройства.
-            std::unique_lock<std::mutex> moveDataLock(moveDataMutex);
+            responseManagerThread.detach();
             tempData = { };
           }
           //std::this_thread::sleep_for(std::chrono::milliseconds(2));
@@ -92,7 +103,18 @@ void dev::rs232::Protocol::runCommand(DevicePtr const& dev, CommandPtr const& cm
   }
   std::cout << "помещение команды в очередь." << std::endl;
   cmd->setId(sequenceId++);
+  std::unique_lock<std::shared_mutex> lock(*devMutexPtr);
   commandsExec.push_back(std::make_pair(dev, cmd));
+}
+
+inline auto dev::rs232::Protocol::getPakageLength() -> std::size_t const {
+  return (devIdLength
+          + cmdLength
+          + transmitDataLength
+          + indexLength
+          + subIndexLength
+          + dataLength
+          + sumLength);
 }
 
 auto dev::rs232::Protocol::dataCheck(dev::TransmitData const& data) -> const bool {
@@ -122,8 +144,6 @@ auto dev::rs232::Protocol::prepareCommand(CommandPtr const& cmd) -> dev::Transmi
     tx.push_back(~((sum >> (8 * i)) & 0xFF));
   }
   std::for_each(tx.begin(), tx.end(), [&](auto& item) { 
-    //std::cout.unsetf(std::ios::dec);
-    //std::cout.setf(std::ios::hex | std::ios::uppercase);
     printf(":%X:", item);
   });
   std::cout << std::endl;
@@ -136,12 +156,17 @@ auto dev::rs232::Protocol::responseManager(std::string const& devName, dev::Tran
     std::cout << "Поиск команды в очереди для передачи ответа data.size() = " << data.size() << std::endl;
     if(data.size() > 0) 
       std::cout << "data[0]=" << static_cast<int>(data[0]) << std::endl;
+
+    std::shared_lock<std::shared_mutex> lock(*devMutexPtr);
     auto cmd = std::find_if(commandsExec.begin(), commandsExec.end(), 
                                [&](auto const& item) {
                                  return item.first->getName() == devName /*&& item.second->getId() == cmdId*/ ;
                               });
     if(cmd != commandsExec.end()) {
       cmd->second->response(std::move(data));
+      cmd->second->setStatus(dev::Status::COMPLETION);
+      lock.unlock();
+      std::unique_lock<std::shared_mutex> lock(*devMutexPtr);
       commandsExec.erase(cmd);
     }
   }

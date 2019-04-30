@@ -78,8 +78,8 @@ namespace dev {
         SetValueCommand(std::uint8_t const& devId, std::uint16_t value): dev::Command(devId, "SetValue", 1, 8772) {
           this->kind = 4;
           struct Des {
-            unsigned char minor;
             unsigned char major;
+            unsigned char minor;
           };
 
           union {

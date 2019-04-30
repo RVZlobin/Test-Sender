@@ -6,6 +6,7 @@
 #include <vector>
 #include <atomic>
 #include <mutex>
+#include <shared_mutex>
 #include <future>
 
 #include <dev/device.h>
@@ -29,17 +30,23 @@ namespace dev {
     } subIndex;
 
     std::atomic<bool> isRun;
-    std::mutex devMutex;
+    mutable std::shared_ptr<std::shared_mutex> devMutexPtr;
     std::once_flag init_flag;
-    //FIX хранить указатель или идентификатор.
+    //хранить указатель или идентификатор.
     std::vector<std::pair<DevicePtr, CommandPtr>> commandsExec;
     std::vector<std::pair<DevicePtr, std::future<int>>> responseRepository;
-    std::size_t sizeParcel = 1;
-    std::size_t transmitDataLength = 1;
-    std::size_t segmentDirectionLength = 1;
-    std::size_t segmentIdLength = 4;
-    std::size_t sequenceId;
+    std::size_t sequenceId = 0;
+
+    const std::size_t devIdLength = 1;        //длинна идентификатора устройства в байтах
+    const std::size_t cmdLength = 1;          //длинна типа команды в байтах
+    const std::size_t transmitDataLength = 1; //длинна разрядности данных в байтах
+    const std::size_t indexLength = 1;        //длинна индекса в байтах
+    const std::size_t subIndexLength = 2;     //длинна под индекса в байтах
+    std::size_t dataLength = 0;               //длинна данных в байтах
+    const std::size_t sumLength = 2;          //длинна контрольной суммы в байтах
     
+    //минимальное количество байт необходимое для расчета длинны пакета.
+    const std::size_t minSizeParcel = devIdLength + cmdLength + transmitDataLength;
   public:
     Protocol();
     Protocol(Protocol const&) = delete;
@@ -48,6 +55,7 @@ namespace dev {
     void runCommand(DevicePtr const& dev, CommandPtr const& cmd);
     
   private:
+    inline auto getPakageLength()->std::size_t const;
     //метод dataCheck проверяет контрольные суммы и сигнатуру ответа.
     auto dataCheck(dev::TransmitData const& data) -> const bool;
     //метод getId из принятого пакета извлекает идентификатор команды которой предназначен ответ.
