@@ -37,11 +37,11 @@ setConnect(QString port) {
 void dev::drivers::rs232::DriverAdapter::
 setValueR1(int value) {
   if(dev && protocol)
-    setResistanceCommand(1, 1, static_cast<std::uint8_t>(value));
+    setResistanceCommand(1, 0, static_cast<std::uint8_t>(value));
 }
 
 void dev::drivers::rs232::DriverAdapter::
 setValueR2(int value) {
   if (dev && protocol)
-    setResistanceCommand(1, 2, static_cast<std::uint8_t>(value));
+    setResistanceCommand(1, 1, static_cast<std::uint8_t>(value));
 }

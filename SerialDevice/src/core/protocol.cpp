@@ -2,7 +2,35 @@
 #include <iostream>
 #include <iterator>
 #include <core/protocol.h>
-  
+
+namespace dev {
+  namespace rs232 {
+
+    template<class T, class C = void>
+    class BytesToVal {
+      union {
+        std::uint8_t bytes[sizeof(T)];
+        T value;
+      } converter;
+
+    public:
+      BytesToVal(C const& begin, C const& end, std::uint8_t const& dop = 0) {
+        for (auto it = begin; it != end; ++it)
+          converter.bytes[std::distance(begin, it)] = *it;
+        for (auto i = std::distance(begin, end); i < sizeof(T); i++)
+          converter.bytes[i] = dop;
+      }
+
+      BytesToVal(dev::TransmitData const& data, std::uint8_t const& dop = 0) {
+        for (auto i = 0; i < sizeof(T); ++i)
+          i < data.size() ?? converter.bytes[i] = data[i] : converter.bytes[i] = dop;
+      }
+
+      T val() const { return converter.value; }
+    };
+  }
+}
+
 dev::rs232::Protocol::Protocol() {
   isRun = true;
   devMutexPtr = std::make_shared<std::shared_mutex>();
@@ -24,12 +52,12 @@ dev::rs232::Protocol::Protocol() {
         }
         lock.unlock();
         cmd->second->setStatus(dev::Status::NEW);
-        if (cmd->second->getKind() == 6) {
-          //FIX тип команд не предполагающих ответа
-          cmd->second->response({ });
-          std::unique_lock<std::shared_mutex> lock(*localdevMutexPtr);
-          commandsExec.erase(cmd);
-        }
+        //if (cmd->second->getKind() == 6) {
+        //  //FIX тип команд не предполагающих ответа
+        //  cmd->second->response({ });
+        //  std::unique_lock<std::shared_mutex> lock(*localdevMutexPtr);
+        //  commandsExec.erase(cmd);
+        //}
       }
     }
     return 0;
@@ -118,7 +146,12 @@ inline auto dev::rs232::Protocol::getPakageLength() -> std::size_t const {
 }
 
 auto dev::rs232::Protocol::dataCheck(dev::TransmitData const& data) -> const bool {
-    return true;
+  std::size_t r_sum = 0;
+  std::size_t f_sum = 0;
+  std::for_each(data.begin(), data.end() - sumLength, [&](auto& item) { r_sum += item; });
+  f_sum = BytesToVal<std::size_t, decltype(data.begin())>(data.end() - sumLength, data.end(), 255).val();
+  r_sum = ~r_sum;
+  return (r_sum == f_sum);
 }
 
 auto dev::rs232::Protocol::getId(dev::TransmitData const& data) -> const std::size_t {
@@ -128,14 +161,14 @@ auto dev::rs232::Protocol::getId(dev::TransmitData const& data) -> const std::si
 auto dev::rs232::Protocol::prepareCommand(CommandPtr const& cmd) -> dev::TransmitData {
   dev::TransmitData tx;
   auto data = cmd->getTransmitData();
-  unsigned char dataSize = static_cast<unsigned char>(data.size());
-  tx.push_back(static_cast<unsigned char>(cmd->getDevId()));
-  tx.push_back(static_cast<unsigned char>(cmd->getKind()));
+  auto dataSize = static_cast<std::uint8_t>(data.size());
+  tx.push_back(static_cast<std::uint8_t>(cmd->getDevId()));
+  tx.push_back(static_cast<std::uint8_t>(cmd->getKind()));
   tx.push_back(dataSize);
-  tx.push_back(static_cast<unsigned char>(cmd->getIndex()));
+  tx.push_back(static_cast<std::uint8_t>(cmd->getIndex()));
   subIndex.src = static_cast<std::uint16_t>(cmd->getSubIndex());
-  tx.push_back(static_cast<unsigned char>(subIndex.des.major));
-  tx.push_back(static_cast<unsigned char>(subIndex.des.minor));
+  tx.push_back(static_cast<std::uint8_t>(subIndex.des.major));
+  tx.push_back(static_cast<std::uint8_t>(subIndex.des.minor));
   
   std::move(data.rbegin(), data.rend(), std::back_inserter(tx));
   std::size_t sum = 0;
