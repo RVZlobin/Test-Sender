@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iterator>
 #include <core/protocol.h>
+#include <chrono>
 
 namespace dev {
   namespace rs232 {
@@ -16,14 +17,14 @@ namespace dev {
     public:
       BytesToVal(C const& begin, C const& end, std::uint8_t const& dop = 0) {
         for (auto it = begin; it != end; ++it)
-          converter.bytes[std::distance(begin, it)] = *it;
+          converter.bytes[std::distance(begin, it)] = static_cast<std::uint8_t>(*it);
         for (auto i = std::distance(begin, end); i < sizeof(T); i++)
           converter.bytes[i] = dop;
       }
 
       BytesToVal(dev::TransmitData const& data, std::uint8_t const& dop = 0) {
         for (auto i = 0; i < sizeof(T); ++i)
-          i < data.size() ?? converter.bytes[i] = data[i] : converter.bytes[i] = dop;
+          i < data.size() ?? converter.bytes[i] = static_cast<std::uint8_t>(data[i]) : converter.bytes[i] = dop;
       }
 
       T val() const { return converter.value; }
@@ -94,7 +95,12 @@ void dev::rs232::Protocol::runCommand(DevicePtr const& dev, CommandPtr const& cm
         while (isRun) {
           //FIX добавить лимит времени на получение данных (сброс не полного вектора)
           std::cout << "Get  signalQuantum." << std::endl;
+          std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
           dev::TransmitData signalQuantum(devLocal->reead());
+          std::chrono::system_clock::time_point newDataTime = std::chrono::system_clock::now();
+          if (std::chrono::duration_cast<std::chrono::milliseconds>(newDataTime - startTime).count() > 300) {
+            tempData = { };
+          }
           std::move(signalQuantum.begin(), signalQuantum.end(), std::back_inserter(tempData));
           if (tempData.size() == minSizeParcel) {
             dataLength = static_cast<std::size_t>(tempData[minSizeParcel - 1]);
@@ -147,9 +153,8 @@ inline auto dev::rs232::Protocol::getPakageLength() -> std::size_t const {
 
 auto dev::rs232::Protocol::dataCheck(dev::TransmitData const& data) -> const bool {
   std::size_t r_sum = 0;
-  std::size_t f_sum = 0;
   std::for_each(data.begin(), data.end() - sumLength, [&](auto& item) { r_sum += item; });
-  f_sum = BytesToVal<std::size_t, decltype(data.begin())>(data.end() - sumLength, data.end(), 255).val();
+  auto f_sum = BytesToVal<std::size_t, decltype(data.begin())>(data.end() - sumLength, data.end(), 255).val();
   r_sum = ~r_sum;
   return (r_sum == f_sum);
 }
@@ -160,6 +165,7 @@ auto dev::rs232::Protocol::getId(dev::TransmitData const& data) -> const std::si
 
 auto dev::rs232::Protocol::prepareCommand(CommandPtr const& cmd) -> dev::TransmitData {
   dev::TransmitData tx;
+  dev::TransmitData txSum;
   auto data = cmd->getTransmitData();
   auto dataSize = static_cast<std::uint8_t>(data.size());
   tx.push_back(static_cast<std::uint8_t>(cmd->getDevId()));
@@ -174,8 +180,9 @@ auto dev::rs232::Protocol::prepareCommand(CommandPtr const& cmd) -> dev::Transmi
   std::size_t sum = 0;
   std::for_each(tx.begin(), tx.end(), [&](auto& item) { sum += item; });
   for (auto i = 0; i < 2; i++) {
-    tx.push_back(~((sum >> (8 * i)) & 0xFF));
+    txSum.push_back(~((sum >> (8 * i)) & 0xFF));
   }
+  std::move(txSum.rbegin(), txSum.rend(), std::back_inserter(tx));
   std::for_each(tx.begin(), tx.end(), [&](auto& item) { 
     printf(":%X:", item);
   });
@@ -202,6 +209,8 @@ auto dev::rs232::Protocol::responseManager(std::string const& devName, dev::Tran
       std::unique_lock<std::shared_mutex> lock(*devMutexPtr);
       commandsExec.erase(cmd);
     }
+  } else {
+    std::cout << "Ошибка проверки данных = " << data.size() << std::endl;
   }
 }
 

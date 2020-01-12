@@ -21,11 +21,9 @@ setValue(std::uint8_t const & devId, std::uint16_t const & value) -> void {
 
 auto dev::drivers::rs232::SerialDeviceDriver::
 setResistanceCommand(std::uint8_t const& devId, std::size_t subIndex, std::uint8_t const& value) -> void {
-  std::thread([=] {
-    dev::com::SetResistanceCommandPtr setResistanceCommandPtr = std::make_shared<dev::com::SetResistanceCommand>(devId, subIndex, value);
-    protocol->runCommand(dev, setResistanceCommandPtr);
-    (*setResistanceCommandPtr)()->get();
-  }).detach();
+  dev::com::SetResistanceCommandPtr setResistanceCommandPtr = std::make_shared<dev::com::SetResistanceCommand>(devId, subIndex, value);
+  protocol->runCommand(dev, setResistanceCommandPtr);
+  (*setResistanceCommandPtr)()->get();
 }
 
 auto dev::drivers::rs232::SerialDeviceDriver::

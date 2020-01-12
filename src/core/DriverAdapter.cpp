@@ -36,12 +36,18 @@ setConnect(QString port) {
 
 void dev::drivers::rs232::DriverAdapter::
 setValueR1(int value) {
-  if(dev && protocol)
-    setResistanceCommand(1, 0, static_cast<std::uint8_t>(value));
+  if (dev && protocol) {
+    std::thread([=] {
+      setResistanceCommand(1, 0, static_cast<std::uint8_t>(value));
+    }).detach();
+  }
 }
 
 void dev::drivers::rs232::DriverAdapter::
 setValueR2(int value) {
-  if (dev && protocol)
-    setResistanceCommand(1, 1, static_cast<std::uint8_t>(value));
+  if (dev && protocol) {
+    std::thread([=] {
+      setResistanceCommand(1, 1, static_cast<std::uint8_t>(value));
+    }).detach();
+  }
 }
