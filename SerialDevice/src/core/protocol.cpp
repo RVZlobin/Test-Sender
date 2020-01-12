@@ -36,13 +36,12 @@ dev::rs232::Protocol::Protocol() {
   isRun = true;
   devMutexPtr = std::make_shared<std::shared_mutex>();
 
-  std::function<int()> writer = [&]() -> int {
-    auto localdevMutexPtr = devMutexPtr;
+  std::function<int()> writer = [&, devMutexPtr = devMutexPtr]() -> int {
     while (isRun) {
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
-      std::shared_lock<std::shared_mutex> lock(*localdevMutexPtr);
+      std::shared_lock<std::shared_mutex> lock(*devMutexPtr);
       auto cmd = std::find_if(commandsExec.begin(), commandsExec.end(),
-        [&](auto const& item) {
+        [](auto const& item) {
           return item.second->getStatus() == dev::Status::SPIRIT;
         });
       if (cmd != commandsExec.end() && cmd->first) {
@@ -51,14 +50,12 @@ dev::rs232::Protocol::Protocol() {
         if (errorcode < 0) {
           throw std::runtime_error("Ошибка записи в порт");
         }
-        lock.unlock();
         cmd->second->setStatus(dev::Status::NEW);
-        //if (cmd->second->getKind() == 6) {
-        //  //FIX тип команд не предполагающих ответа
-        //  cmd->second->response({ });
-        //  std::unique_lock<std::shared_mutex> lock(*localdevMutexPtr);
-        //  commandsExec.erase(cmd);
-        //}
+        if (cmd->second->getKind() == 6) {
+          //FIX тип команд не предполагающих ответа
+          cmd->second->response({ });
+          commandsExec.erase(cmd);
+        }
       }
     }
     return 0;
@@ -93,12 +90,13 @@ void dev::rs232::Protocol::runCommand(DevicePtr const& dev, CommandPtr const& cm
       dev::TransmitData tempData;
       try {
         while (isRun) {
-          //FIX добавить лимит времени на получение данных (сброс не полного вектора)
           std::cout << "Get  signalQuantum." << std::endl;
           std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
           dev::TransmitData signalQuantum(devLocal->reead());
           std::chrono::system_clock::time_point newDataTime = std::chrono::system_clock::now();
           if (std::chrono::duration_cast<std::chrono::milliseconds>(newDataTime - startTime).count() > 300) {
+            // лимит времени на получение данных(сброс не полного вектора)
+            // очищаем буфер если данных долго нет (для удаления запчастей неполностью принятых ответов)
             tempData = { };
           }
           std::move(signalQuantum.begin(), signalQuantum.end(), std::back_inserter(tempData));
@@ -205,8 +203,6 @@ auto dev::rs232::Protocol::responseManager(std::string const& devName, dev::Tran
     if(cmd != commandsExec.end()) {
       cmd->second->response(std::move(data));
       cmd->second->setStatus(dev::Status::COMPLETION);
-      lock.unlock();
-      std::unique_lock<std::shared_mutex> lock(*devMutexPtr);
       commandsExec.erase(cmd);
     }
   } else {

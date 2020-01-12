@@ -70,7 +70,7 @@ namespace dev {
   
   namespace com {
     
-    class SetValueCommand : public dev::Command {
+    class SetValueCommand final: public dev::Command {
         mutable std::promise<void> p;
         mutable std::shared_ptr<std::shared_future<void>> result;
         
@@ -98,7 +98,8 @@ namespace dev {
           this->transmitData.push_back(val.des.major);
           result = std::make_shared<std::shared_future<void>>(p.get_future());
         }
-        
+        SetValueCommand(SetValueCommand const&) = delete;
+
         std::shared_ptr<std::shared_future<void>> operator()() const {
           return result;
         }
@@ -111,7 +112,7 @@ namespace dev {
     };
     typedef std::shared_ptr<SetValueCommand> SetValueCommandPtr;
     
-    class IncCommand : public dev::Command {
+    class IncCommand final: public dev::Command {
         mutable std::promise<std::uint8_t> p;
         mutable std::shared_ptr<std::shared_future<std::uint8_t>> result;
         std::uint8_t value;
@@ -120,8 +121,8 @@ namespace dev {
           this->transmitData.push_back(value);
           result = std::make_shared<std::shared_future<std::uint8_t>>(p.get_future());
         }
+
         IncCommand(IncCommand const&) = delete;
-        virtual ~IncCommand() { }
         std::shared_ptr<std::shared_future<std::uint8_t>> operator()() const {
           return result;
         }

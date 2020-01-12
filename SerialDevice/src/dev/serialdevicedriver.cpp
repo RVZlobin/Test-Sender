@@ -7,11 +7,6 @@ SerialDeviceDriver(dev::SerialDevicePtr const& rs232Dev)
   protocol = std::make_shared<dev::rs232::Protocol>();
 }
 
-dev::drivers::rs232::SerialDeviceDriver::
-~SerialDeviceDriver() {
-
-}
-
 auto dev::drivers::rs232::SerialDeviceDriver::
 setValue(std::uint8_t const & devId, std::uint16_t const & value) -> void {
   dev::com::SetValueCommandPtr setValueCommand = std::make_shared<dev::com::SetValueCommand>(devId, value);
