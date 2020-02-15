@@ -9,8 +9,12 @@ dev::SerialDevice::SerialDevice(std::string const& portName, Options const& opti
 { }
 
 dev::SerialDevice::~SerialDevice() { 
-  if(portPtr && portPtr->is_open())
-    portPtr->close();
+  if (portPtr) {
+    try {
+      if (portPtr->is_open())
+        portPtr->close();
+    } catch (...) { }
+  }
 }
       
 auto dev::SerialDevice::open() -> int {

@@ -13,6 +13,14 @@
 
 namespace dev {
   
+  enum class CommandKinds {
+    PING  = 0,
+    GET   = 2,
+    SET   = 4,
+    SINGL = 6,
+    FLOW  = 8
+  };
+
   enum class Status {
     SPIRIT,
     NEW,
@@ -27,24 +35,32 @@ namespace dev {
       std::size_t id = 0;
       Status status = Status::SPIRIT;
     protected:
+      Command() = default;
+      Command(Command const&) = delete;
+      Command(Command &&) = default;
+      Command& operator=(Command&&) = default;
+      Command& operator=(Command const&) = delete;
+
       std::string name = "";
-      std::uint8_t kind = 0;
+      CommandKinds kind = CommandKinds::PING;
       std::uint8_t devId = 0;
       std::size_t index = 0;
       std::size_t subIndex = 0;
-      dev::TransmitData transmitData;
+      dev::TransmitData transmitData = { };
     public:
-      explicit Command(std::uint8_t const& devId, std::string const& name);
-      explicit Command(std::uint8_t const& devId, std::string const& name, std::size_t const& index, std::size_t const& subIndex);
-      Command() = delete;
-      virtual ~Command ();
+      explicit Command(std::uint8_t const& devId, std::string const& name) noexcept;
+      explicit Command(std::uint8_t const& devId, std::string const& name, std::size_t const& index, std::size_t const& subIndex) noexcept;
+      virtual ~Command() noexcept { };
       
-      virtual auto setId(std::size_t id) -> void final;
-      virtual auto getId() const -> std::size_t final;
-      virtual auto setStatus(Status const& status) -> void final;
-      virtual auto getStatus() const -> Status final;
-      virtual auto getTransmitData() const -> dev::TransmitData final;
-      virtual auto response(dev::TransmitData const& transmitData) -> void final;
+      virtual auto setId(std::size_t id) -> void;
+      virtual auto setStatus(Status const& status) -> void;
+
+      auto getId() const -> std::size_t;
+      auto getStatus() const -> Status;
+
+      virtual auto getTransmitData() const -> dev::TransmitData;
+      virtual auto response(dev::TransmitData&& transmitData) -> void;
+
       auto operator== (Command const& r) const -> bool {
         if(this->id == 0)
           return false;
@@ -55,7 +71,7 @@ namespace dev {
       virtual auto getDevId() const -> std::uint8_t {
         return devId;
       };
-      virtual auto getKind() const -> std::uint8_t {
+      virtual auto getKind() const -> CommandKinds {
         return kind;
       };
       virtual auto getIndex() const -> std::size_t {
@@ -65,52 +81,10 @@ namespace dev {
         return subIndex;
       };
     private:
-      virtual auto responseProcessing(dev::TransmitData const& transmitData) -> void = 0;
+      virtual auto responseProcessing(dev::TransmitData&& transmitData) -> void = 0;
   };
   
   namespace com {
-    
-    class SetValueCommand final: public dev::Command {
-        mutable std::promise<void> p;
-        mutable std::shared_ptr<std::shared_future<void>> result;
-        
-      public:
-        SetValueCommand(std::uint8_t const& devId, std::uint16_t value): dev::Command(devId, "SetValue", 1, 8772) {
-          this->kind = 4;
-          struct Des {
-            unsigned char major;
-            unsigned char minor;
-          };
-
-          union {
-            std::uint16_t src;
-            struct Des des;
-          } val;
-
-          val.src = value;
-          /*
-          std::size_t length = sizeof(decltype(value));
-          for (auto i = 0; i < length; i++) {
-            this->transmitData.push_back((reinterpret_cast<unsigned char*>(value))[i]);
-          }
-          */
-          this->transmitData.push_back(val.des.minor);
-          this->transmitData.push_back(val.des.major);
-          result = std::make_shared<std::shared_future<void>>(p.get_future());
-        }
-        SetValueCommand(SetValueCommand const&) = delete;
-
-        std::shared_ptr<std::shared_future<void>> operator()() const {
-          return result;
-        }
-      private: 
-        virtual auto responseProcessing(dev::TransmitData const& transmitData) -> void override final {
-          if (transmitData.size() > 0) {
-            p.set_value();
-          }
-        };
-    };
-    typedef std::shared_ptr<SetValueCommand> SetValueCommandPtr;
     
     class IncCommand final: public dev::Command {
         mutable std::promise<std::uint8_t> p;
@@ -120,14 +94,16 @@ namespace dev {
         IncCommand(std::uint8_t const& devId, std::uint8_t const& value): dev::Command(devId, "Inc"), value(value) {
           this->transmitData.push_back(value);
           result = std::make_shared<std::shared_future<std::uint8_t>>(p.get_future());
+          this->kind = CommandKinds::SET;
         }
-
+    
         IncCommand(IncCommand const&) = delete;
+
         std::shared_ptr<std::shared_future<std::uint8_t>> operator()() const {
           return result;
         }
       private: 
-        virtual auto responseProcessing(dev::TransmitData const& transmitData) -> void override final {
+        virtual auto responseProcessing(dev::TransmitData&& transmitData) -> void override final {
           if(transmitData.size() > 0) {
             p.set_value(static_cast<std::uint8_t>(transmitData[0]));
           }

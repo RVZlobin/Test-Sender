@@ -18,9 +18,9 @@ auto main(int argc, char* argv[]) -> int {
   paths.append("iconengines");
   paths.append("imageformats");
   paths.append("platforms");
-  paths.append("platformthemes");
-  paths.append("sqldrivers");
-  paths.append("styles");
+  //paths.append("platformthemes");
+  //paths.append("sqldrivers");
+  //paths.append("styles");
   QCoreApplication::setLibraryPaths(paths);
 
   QApplication app(argc, argv);

@@ -19,7 +19,7 @@ namespace dev {
       class SERIALDEVICE_API SerialDeviceDriver {
         
       protected:
-        SerialDeviceDriver() { }
+        SerialDeviceDriver() = default;
         dev::SerialDevicePtr dev = nullptr;
         dev::rs232::ProtocolPtr protocol = nullptr;
 

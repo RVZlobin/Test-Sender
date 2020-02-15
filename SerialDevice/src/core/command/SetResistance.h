@@ -15,29 +15,32 @@
 namespace dev {  
   namespace com {
 
-    class SetResistanceCommand : public dev::Command {
+    class SetResistanceCommand final : public dev::Command {
         mutable std::promise<void> p;
         mutable std::shared_ptr<std::shared_future<void>> result;
-        std::uint8_t value;
+        std::uint8_t value = 0;
       public:
-        SetResistanceCommand(std::uint8_t const& devId, std::size_t subIndex, std::uint8_t const& value)
+        SetResistanceCommand() = default;
+        explicit SetResistanceCommand(std::uint8_t const& devId, std::size_t subIndex, std::uint8_t const& value)
           : dev::Command(devId, "SetResistance", 1, subIndex), value(value)
         {
-          this->kind = 6;
+          this->kind = CommandKinds::SINGL;
           this->transmitData.push_back(value);
           result = std::make_shared<std::shared_future<void>>(p.get_future());
         }
+        ~SetResistanceCommand() = default;
         SetResistanceCommand(SetResistanceCommand const&) = delete;
-        virtual ~SetResistanceCommand() { }
+        SetResistanceCommand& operator=(SetResistanceCommand const&) = delete;
+        
         std::shared_ptr<std::shared_future<void>> operator()() const {
           return result;
         }
       private: 
-        virtual auto responseProcessing(dev::TransmitData const& transmitData) -> void override final {
+        virtual auto responseProcessing(dev::TransmitData&& transmitData) -> void override final {
           p.set_value();
         };
     };
     typedef std::shared_ptr<SetResistanceCommand> SetResistanceCommandPtr;
   }
 }
-#endif // COMMAND_H
+#endif // COMMAND_SET_RESISTANCE_H

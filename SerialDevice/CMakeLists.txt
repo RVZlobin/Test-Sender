@@ -26,6 +26,7 @@ SET (SerialDevice_HEADERS
 
 SET (SerialDevice_COMMAND_HEADERS
   src/core/command/SetResistance.h
+  src/core/command/GetADCDataCollected.h
 )
 
 SET (SerialDevice_SOURCE

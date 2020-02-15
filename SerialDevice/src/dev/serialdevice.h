@@ -27,7 +27,7 @@ namespace dev {
     rs232::Parity parity = rs232::Parity::none;
   };
   
-  class SERIALDEVICE_API SerialDevice: public virtual dev::Device {
+  class SERIALDEVICE_API SerialDevice final: public virtual dev::Device {
       std::string portName;
       Options options;
       boost::asio::io_service* io;
@@ -35,7 +35,8 @@ namespace dev {
     public:
       explicit SerialDevice (std::string const& portName, dev::Options const& options = Options());
       SerialDevice(SerialDevice const&) = delete;
-      virtual ~SerialDevice ();
+      SerialDevice& operator=(SerialDevice const&) = delete;
+      virtual ~SerialDevice () noexcept;
       
       virtual auto open() -> int override;
       virtual auto close() -> int override;
